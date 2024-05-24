@@ -3,6 +3,7 @@
 	inputMsgLen = .-inputMsg
 	operacion: .space 101
 	reversePolishNotation: .space 101
+	variables: .space 100
 
 .section .text
 .global _start
@@ -34,6 +35,8 @@ _start:
 	ldr r11,=reversePolishNotation			// puntero de rpn
 	mov r10,#0								// indice infix
 	ldr r0,=operacion						// puntero de input
+	ldr r8,=variables						// puntero de variables
+	mov r9,#0								// indice de variables
 	
 	@ leemos el byte
 InfixToRPN:
@@ -41,16 +44,19 @@ InfixToRPN:
 	
 	cmp r1, #0								// llegamos al fin del input?
 	beq endRPNConvertion					
+	@ VERIFICAR SI ES PARENTESIS )
+	cmp r1,#')'
+	beq popPila
 	
 	bl isNumber
 	cmp r2,#1								// es numero?
-	beq storeNumberVariable
+	beq storeNumber
 	bl isOperator							// es operador?
 	cmp r2,#0
-	beq storeNumberVariable					// no? guarde variable
+	beq storeVariable						// no? guarde variable
 	
-	@ VERIFICAR SI SON PARENTESIS
 
+	
 	
 	@ aqui tenemos que ver el operador actual y de la pila
 	@ r1 contiene el operador actual del input
@@ -96,10 +102,40 @@ pushPila:
 	add r10,#1								// aumentamos el indice del 
 	b InfixToRPN							// nos devolvemos al ciclo
 	
-storeNumberVariable:
+popPila:
+	@ actualmente la pila no esta modificado, por lo tanto, hay que llegar hasta ( o fin de la pila
+	pop {r1}
+	cmp r1,#'('
+	beq popPila.end
+	cmp r1,#0
+	beq popPila.exit
+	add r12,#1
+	add r10,#1
+	strb r1,[r11,r12]
+
+	b popPila
+	
+popPila.end:
+	add r10,#1
+	b InfixToRPN
+
+popPila.exit:
+	pop {r1}
+	b endRPN
+	
+	
+storeNumber:
 	strb r1,[r11,r12]						// store number in rpn[i]
 	add r12,#1								// pasamos al siguiente indice del rpn
 	add r10,#1								// pasamos al siguiente caracter del input 
+	b InfixToRPN							// nos devolvemos al loop
+	
+storeVariable:
+	strb r1,[r11,r12]						// store number in rpn[i]
+	add r12,#1								// pasamos al siguiente indice del rpn
+	add r10,#1								// pasamos al siguiente caracter del input 
+	strb r1,[r8,r9]							// guardamos la variable en variables
+	add r9,#1								// aumentamos el indice de variables
 	b InfixToRPN							// nos devolvemos al loop
 	
 endRPNConvertion:
