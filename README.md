@@ -18,3 +18,42 @@ This project involves developing a program to solve mathematical expressions usi
 The expression to be solved is provided by the user as a string input. The program should be able to parse the numbers and operands
 
 By using the Reverse Polish Notation, the program can be able to output the results from the expression.
+
+---
+
+## Reverse Polish Notation
+Reverse Polish Notation (RPN), also known as postfix notation, is a mathematical notation in which operators follow their operands. It eliminates the need for parentheses used in infix notation, simplifying calculations and reducing ambiguity. Converting infix expressions (like A * (B + C) / D) to RPN (like A B C + * D /) involves a systematic process that respects operator precedence and parentheses. Understanding and applying these rules can enhance computational efficiency and is fundamental in various computer science applications, such as in stack-based calculators and expression evaluation in programming languages. This guide outlines the rules and provides a step-by-step method for converting infix expressions to RPN.
+
+| Operator | Precedence |
+|----------|------------|
+|    )     |     5      |
+|    (     |     5      |
+|    ^     |     4      |
+|    *     |     3      |
+|    /     |     3      |
+|    +     |     2      |
+|    -     |     2      |
+
+### Operands:
+
+- If the character is an operand (e.g., a variable or a number), add it directly to the output string.
+
+### Operators:
+When you read an operator (like +, -, *, /):
+- Compare it with the operator on the top of the stack.
+- If the stack is empty or has a left parenthesis ( on top, PUSH the current operator onto the stack.
+- If the operator is greater in precedence than top of stack, push.
+- If the operator is equal o less in precedence than top of stack, POP operator from stack, put it on output string, PUSH current operator to stack.
+
+### Left Parenthesis (:
+
+- If the character is a left parenthesis (, push it onto the stack.
+  
+### Right Parenthesis ):
+
+- If the character is a right parenthesis ), pop from the stack to the output string until a left parenthesis ( is at the top of the stack. Pop and discard the left parenthesis.
+
+### End of Expression:
+
+- When the end of the infix expression is reached, pop all operators from the stack to the output string.
+
