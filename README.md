@@ -43,7 +43,7 @@ When you read an operator (like +, -, *, /):
 - Compare it with the operator on the top of the stack.
 - If the stack is empty or has a left parenthesis ( on top, PUSH the current operator onto the stack.
 - If the operator is greater in precedence than top of stack, push.
-- If the operator is equal o less in precedence than top of stack, POP operator from stack, put it on output string, PUSH current operator to stack.
+- If the operator is equal o less in precedence than top of stack, POP top operator from stack, put it on output string, PUSH current operator to stack until the next top precedence is lower than the actuak operador.
 
 ### Left Parenthesis (:
 
@@ -56,4 +56,7 @@ When you read an operator (like +, -, *, /):
 ### End of Expression:
 
 - When the end of the infix expression is reached, pop all operators from the stack to the output string.
+
+### Examples used in the program
+![image](https://github.com/liangbinjie/ARM32_Math_Expressions_Solver/assets/67171031/27fcf0e5-1e91-4fe8-84b4-c061bdd6ad35)
 
