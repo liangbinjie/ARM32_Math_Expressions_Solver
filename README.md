@@ -60,3 +60,7 @@ When you read an operator (like +, -, *, /):
 ### Examples used in the program
 ![image](https://github.com/liangbinjie/ARM32_Math_Expressions_Solver/assets/67171031/27fcf0e5-1e91-4fe8-84b4-c061bdd6ad35)
 
+### Input value for every variable
+![image](https://github.com/liangbinjie/ARM32_Math_Expressions_Solver/assets/67171031/c128c006-5d49-48f6-9d50-77cc38ab95a0)
+
+
