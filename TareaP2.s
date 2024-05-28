@@ -5,6 +5,10 @@
 	reversePolishNotation: .space 101
 	variables: .space 100
 	enter0ah: .asciz "\n"
+	inputVariable: .asciz " > Ingrese su valor: "
+	inputVariableLen = .-inputVariable
+	char: .space 1
+	num: .space 11
 
 .section .text
 .global _start
@@ -181,18 +185,45 @@ endRPNConvertion:
 	b endRPNConvertion
 	
 endRPN:
-	push {r1}								// metemos el ultimo valor de la pila, ya que ese no era un operador
+	// push {r1}
 	
-@ IMPRIMIMOS EL INPUT
-	
+
+	@ LIMPIAMOS ESPACIOS DOBLES
 	ldr r0,=reversePolishNotation
 	bl cleanDoubleSpace
 	
-	ldr r1,=reversePolishNotation
-	mov r2,#101
+	@ PRINT MSG
+	@ldr r1,=reversePolishNotation
+	@mov r2,#101
+	@bl writeString
+	
+	ldr r4,=variables
+	ldr r3,=char
+askInput:
+	ldrb r1,[r4]
+	cmp r1,#0
+	beq askInput.end
+	
+	strb r1,[r3]
+	ldr r1,=char
+	mov r2,#1
 	bl writeString
 	
+	ldr r1,=inputVariable
+	ldr r2,=inputVariableLen
+	bl writeString
+	mov r7,#3
+	mov r0,#1
+	ldr r1,=num
+	mov r2,#10
+	swi 0 
+
 	
+	add r4,#1
+	b askInput 
+askInput.end:
+
+
 _exit:
 	bl printEnter
 	mov r7,#1
