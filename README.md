@@ -24,6 +24,8 @@ By using the Reverse Polish Notation, the program can be able to output the resu
 ## Reverse Polish Notation
 Reverse Polish Notation (RPN), also known as postfix notation, is a mathematical notation in which operators follow their operands. It eliminates the need for parentheses used in infix notation, simplifying calculations and reducing ambiguity. Converting infix expressions (like A * (B + C) / D) to RPN (like A B C + * D /) involves a systematic process that respects operator precedence and parentheses. Understanding and applying these rules can enhance computational efficiency and is fundamental in various computer science applications, such as in stack-based calculators and expression evaluation in programming languages. This guide outlines the rules and provides a step-by-step method for converting infix expressions to RPN.
 
+### Operator Precedence Chart
+
 | Operator | Precedence |
 |----------|------------|
 |    )     |     5      |
@@ -33,6 +35,8 @@ Reverse Polish Notation (RPN), also known as postfix notation, is a mathematical
 |    /     |     3      |
 |    +     |     2      |
 |    -     |     2      |
+
+---
 
 ### Operands:
 
