@@ -57,10 +57,47 @@ When you read an operator (like +, -, *, /):
 
 - When the end of the infix expression is reached, pop all operators from the stack to the output string.
 
+---
+
 ### Examples used in the program
 ![image](https://github.com/liangbinjie/ARM32_Math_Expressions_Solver/assets/67171031/27fcf0e5-1e91-4fe8-84b4-c061bdd6ad35)
 
 ### Input value for every variable
 ![image](https://github.com/liangbinjie/ARM32_Math_Expressions_Solver/assets/67171031/c128c006-5d49-48f6-9d50-77cc38ab95a0)
 
+---
+
+## Evaluate Expression
+
+After converting infix to reverse Polish Notation, the next step is to evaluate the expression. For doing such task, we will need to use back our friend the *STACK*.
+
+Using the stack, we push the operands (numbers and letters) from left to right. When we encounter an operator, we pop two operands from the stack and we evaluate the arithmetic expression, after getting the result, we push the result into the stack. If the expression is out of operators, it means we have reached to the end of the evaluation.
+
+### Example:
+
+We have the following RPN expression `12 3 * 4 3 - +` | Original expression: `( 12 * 3 ) + ( 4 - 3 )`
+
+First we push the numbers
+
+|   STACK  |
+|----------|
+|    12    |
+|    3     |
+
+We now encounter a multiplication operator `*`, so, we pop the last two numbers out of the stack, and we multiply them, which we give us `36`, with the result 36, we push it into the stack. Then we push the other two numbers. (3, 4)
+
+|   STACK  |
+|----------|
+|    4     |
+|    3     |
+|    36    |
+
+After pushing 3 and 4, we encounter `-` sign, we need to substract, giving us the result of `1`, we push `1` into the stack
+
+|   STACK  |
+|----------|
+|    1     |
+|    36    |
+
+The next character in the expression is `+` operator, we need to pop the two numbers left in the stack and make an addition. This will give the final result of `37`.
 
