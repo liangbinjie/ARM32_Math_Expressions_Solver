@@ -9,6 +9,8 @@
 	inputVariableLen = .-inputVariable
 	char: .space 1
 	num: .space 11
+	new_operacion: .space 101
+	result: .space 11
 
 .section .text
 .global _start
@@ -185,44 +187,97 @@ endRPNConvertion:
 	b endRPNConvertion
 	
 endRPN:
-	// push {r1}
-	
 
-	@ LIMPIAMOS ESPACIOS DOBLES
 	ldr r0,=reversePolishNotation
 	bl cleanDoubleSpace
+	bl cleaningExpression
 	
-	@ PRINT MSG
-	@ldr r1,=reversePolishNotation
-	@mov r2,#101
-	@bl writeString
-	
-	ldr r4,=variables
-	ldr r3,=char
-askInput:
-	ldrb r1,[r4]
-	cmp r1,#0
-	beq askInput.end
-	
-	strb r1,[r3]
-	ldr r1,=char
-	mov r2,#1
+	ldr r1,=new_operacion
+	mov r2,#101
 	bl writeString
+	bl printEnter
 	
-	ldr r1,=inputVariable
-	ldr r2,=inputVariableLen
+	ldr r0,=new_operacion
+	push {r0}
+evaluate:
+	pop {r0}				// OBTENER PUNTERO 
+	ldrb r1,[r0]			// OBTENER CARACTER
+	cmp r1,#0				// FIN?
+	beq evaluate.end		// YEAH
+	cmp r1,#0x20
+	beq nextChar
+	bl isOperator			// NO, ES OPERADOR?
+	cmp r2,#1				// SI
+	beq evaluar				// EVALUE
+	bl readNum				// ES NUMERO
+	push {r3}				// GUARDE EN STACK EL NUMERO
+	push {r0}				// GUARDE EL PUNTERO
+	b evaluate				// CICLO
+
+nextChar:
+	add r0,#1
+	push {r0}
+	b evaluate
+
+evaluar:
+	add r0,#1
+	mov r12,r0		// guardamos el siguiente puntero
+	cmp r1,#'+'
+	beq suma
+	cmp r1,#'-'
+	beq resta
+	cmp r1,#'*'
+	beq multi
+	cmp r1,#'/'
+	beq divi
+	cmp r1,#'^'
+	beq exp
+	b evaluate
+suma:
+	pop {r2,r3}		// pop nums
+	add r2,r3		// add
+	push {r2} 		// guarde result 
+	push {r12}		// guarde puntero
+	b evaluate		// ciclo
+
+resta:
+	pop {r2,r3}
+	SUB r3,r2
+	push {r3}
+	push {r12}
+	b evaluate
+
+multi:
+	pop {r2,r3}
+	mul r3,r2
+	push {r3}
+	push {r12}
+	b evaluate
+
+divi:
+	pop {r2,r3}
+	sdiv r3,r2
+	push {r3}
+	push {r12}
+	b evaluate
+
+exp:	
+	pop {r2,r3}
+	bl pow
+	push {r2}
+	push {r12}
+	b evaluate
+	
+	
+
+evaluate.end:
+	pop {r0}
+	ldr r1,=result			// le damos la direccion del buffer
+	bl int_to_ascii			// llamamos a la funcion
+	
+	ldr r1,=result
+	mov r2,#11
 	bl writeString
-	mov r7,#3
-	mov r0,#1
-	ldr r1,=num
-	mov r2,#10
-	swi 0 
-
-	
-	add r4,#1
-	b askInput 
-askInput.end:
-
 
 _exit:
 	bl printEnter
@@ -231,6 +286,53 @@ _exit:
 	swi 0
 
 @ ======== FUNCTIONS =========
+readNum:
+	//ldr r0,=numInput
+	mov r2,#10
+	mov r3,#0
+	
+	readNum.while:
+		ldrb r1,[r0]
+		cmp r1,#0x20
+		BEQ readNum.exit
+		
+		sub r1,#0x30
+		add r0,#1
+		
+		mul r3,r2
+		add r3,r1
+		BAL readNum.while
+	readNum.exit:
+		add r0,#1
+		@ r0: contiene el puntero
+		@ r3: contiene el resultado
+		bx lr
+
+cleaningExpression:
+	@ funcion para limpiar los espacios dobles
+	@ r0 = rpn
+	@ r1 =  new rpn
+	ldr r0,=reversePolishNotation
+	ldr r1,=new_operacion
+	mov r5,#0
+	mov r4,#0
+	cleaning.while:
+		ldrb r2,[r0,r4]
+		add r4,#1
+		cmp r2,#0x7f
+		beq cleaning.nextChar
+		cmp r2,#0
+		beq cleaning.exit
+		strb r2,[r1,r5]
+		add r5,#1
+		b cleaning.while
+	cleaning.nextChar:
+		
+		b cleaning.while
+	cleaning.exit:
+		bx lr
+		
+		
 
 isOperator:
 	@ REGISTROS QUE SALEN MODIFICADOS: R2,R3
@@ -370,3 +472,68 @@ printEnter:
 	mov r2,#2
 	swi 0
 	bx lr
+	
+int_to_ascii:
+    PUSH {LR}            @
+    MOV R2, R1           @ movemos el puntero del numero en decimal a r2
+    MOV R3, #10          @ 
+    ADD R4, R1, #11      @ 
+    MOV R1, R4
+
+loop:
+    MOV R4, #0           @ 
+    UDIV R4, R0, R3      @ 
+    MLS R5, R4, R3, R0   @ r5 = r0 - (r4*10), es decir r0%10
+    ADD R5, R5, #'0'     @ 
+    STRB R5, [R1, #-1]!  @ 
+    MOV R0, R4           @ 
+    CMP R0, #0           @ 
+    BNE loop             @ 
+
+    @ 
+    MOV R0, R2           @ 
+    MOV R1, R1           @ 
+    BL reverse           @ 
+    POP {LR}             @
+    BX LR                @ 
+
+
+reverse:
+    PUSH {R4, R5, LR}    @ 
+    SUB R1, R1, #1       @ 
+rev_loop:
+    CMP R0, R1           @ 
+    BHS rev_done         @ 
+    LDRB R4, [R0]        @ 
+    LDRB R5, [R1]        @ 
+    STRB R5, [R0]        @ 
+    STRB R4, [R1]        @ 
+    ADD R0, R0, #1       @ 
+    SUB R1, R1, #1       @ 
+    B rev_loop           @
+rev_done:
+    POP {R4, R5, LR}     @ 
+    BX LR                @ 
+
+pow:
+	@ funcion de exponente
+	@ R3: recibe el numero
+	@ R2: recibe el exponente
+	mov r4,#0
+	cmp r2,#0
+	beq pow.cero
+	mov r6,#1
+	pow.while:
+		cmp r4,r2
+		beq pow.exit
+		mul r6,r3
+		add r4,#1
+		b pow.while
+	
+	pow.exit:
+		mov r2,r6
+		bx lr
+		
+	pow.cero:
+		mov r2,#1
+		bx lr
