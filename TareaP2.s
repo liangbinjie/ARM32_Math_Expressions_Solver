@@ -1,15 +1,15 @@
 .section .data
 	inputMsg: .asciz "Ingrese una operacion matematica: "
 	inputMsgLen = .-inputMsg
-	operacion: .space 101
-	reversePolishNotation: .space 101
-	variables: .space 100
+	operacion: .space 1025
+	reversePolishNotation: .space 1025
+	variables: .space 11
 	enter0ah: .asciz "\n"
 	inputVariable: .asciz " > Ingrese su valor: "
 	inputVariableLen = .-inputVariable
 	char: .space 1
 	num: .space 11
-	new_operacion: .space 101
+	new_operacion: .space 1025
 	result: .space 11
 
 .section .text
@@ -24,7 +24,7 @@ _start:
 	
 @ LLAMAMOS LA FUNCION LEER INPUT
 	ldr r1,=operacion
-	mov r2,#100									// tiene un limite de 100 caracteres
+	mov r2,#1025									// tiene un limite de 100 caracteres
 	bl readInput
 	
 @ ELIMINAMOS AL ENTER DEL FINAL DEL INPUT
@@ -43,7 +43,7 @@ _start:
 	mov r10,#0								// indice infix
 	ldr r0,=operacion						// puntero de input
 	ldr r8,=variables						// puntero de variables
-	mov r9,#0								// indice de variables
+	mov r9,#0				 				// indice de variables
 	
 	@ leemos el byte
 InfixToRPN:
@@ -167,9 +167,12 @@ storeNumber:
 storeVariable:
 	strb r1,[r11,r12]						// store number in rpn[i]
 	add r12,#1								// pasamos al siguiente indice del rpn
-	add r10,#1								// pasamos al siguiente caracter del input 
+	add r10,#1
+	cmp r1,#0x20
+	beq noGuardeEspacio						// pasamos al siguiente caracter del input 
 	strb r1,[r8,r9]							// guardamos la variable en variables
-	add r9,#1								// aumentamos el indice de variables
+	add r9,#1
+	noGuardeEspacio:						// aumentamos el indice de variables
 	b InfixToRPN							// nos devolvemos al loop
 	
 endRPNConvertion:
@@ -192,8 +195,34 @@ endRPN:
 	bl cleanDoubleSpace
 	bl cleaningExpression
 	
+	ldr r4,=variables
+	ldr r3,=char
+
+askInput:
+	ldrb r1,[r4]
+	cmp r1,#0
+	beq askInput.end
+	
+	strb r1,[r3]
+	ldr r1,=char
+	mov r2,#1
+	bl writeString
+	
+	ldr r1,=inputVariable
+	ldr r2,=inputVariableLen
+	bl writeString
+	mov r7,#3
+	mov r0,#1
+	ldr r1,=num
+	mov r2,#10
+	swi 0
+	
+	
+	add r4,#1
+	b askInput
+askInput.end:
 	ldr r1,=new_operacion
-	mov r2,#101
+	mov r2,#1025
 	bl writeString
 	bl printEnter
 	
@@ -375,9 +404,9 @@ isNumber:
 	@ Funcion que recibe un byte en r1
 	@ y devuelve 1 si es un numero, 0 si no es, en r2
 	@ r1: receives byte
-	cmp r1,#30
+	cmp r1,#0x30
 	blt notNumber
-	cmp r1,#39
+	cmp r1,#0x39
 	bgt notNumber
 	mov r2,#1
 	bx lr
