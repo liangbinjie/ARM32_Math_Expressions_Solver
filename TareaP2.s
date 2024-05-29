@@ -12,12 +12,17 @@
 	num: .space 11
 	new_operacion: .space 1025
 	result: .space 11
+	minus: .byte 0
+	minusSign: .asciz "-"
 
 	divErrorMsg: .asciz "Division invalida\n"
 	divErrorLen = .-divErrorMsg
 
 	OverflowErrorMsg: .asciz "Resultado supera a 32 bits\n"
 	OverflowErrorMsgLen = .-OverflowErrorMsg
+
+	invalidMsg: .asciz "Expresion invalida\n"
+	invalidMsgLen = .-invalidMsg
 
 
 .section .text
@@ -38,7 +43,14 @@ _start:
 @ ELIMINAMOS AL ENTER DEL FINAL DEL INPUT
 	ldr r0,=operacion
 	bl delReturn
-	
+
+@ CHECKEAMOS SI LA EXPRESION ESTA BIEN PUESTA
+	@ checkeo de parentesis
+	ldr r0,=operacion
+	bl checkParenthesis
+	cmp r0,#0
+	beq badExpression
+
 @ CONVERTIMOS DE INFIJO -> RPN
 	// si es un operando (un numero o letra, va directo al string)
 	// si es un operador (+-/*^) va al stack basado en su prioridad
@@ -306,6 +318,9 @@ resta:
 	SUB r3,r2
 	b restaContinuar
 restaABS:
+	push {r0-r12}
+	bl NOTMinus
+	pop {r0-r12}
 	SUB R2,R3
 
 restaContinuar:
@@ -342,6 +357,14 @@ evaluate.end:
 	ldr r1,=result							// le damos la direccion del buffer
 	bl int_to_ascii							// llamamos a la funcion
 	
+	ldr r0,=minus
+	ldrb r1,[r0]
+	cmp r1,#0
+	beq printPositive
+	ldr r1,=minusSign
+	mov r2,#1
+	bl writeString
+printPositive:
 	ldr r1,=result
 	mov r2,#11
 	bl writeString
@@ -361,6 +384,12 @@ divError:
 overflowError:
 	ldr r1,=OverflowErrorMsg
 	ldr r2,=OverflowErrorMsgLen
+	bl writeString
+	b _exit
+
+badExpression:
+	ldr r1,=invalidMsg
+	ldr r2,=invalidMsgLen
 	bl writeString
 	b _exit
 
@@ -698,3 +727,42 @@ pow:
 	pow.cero:
 		mov r2,#1
 		bx lr
+
+checkParenthesis:
+	@ funcion para verificar que la expresion dada, los parentesis esten bien puestos
+	@ r0: expresion
+	@ r2: contador de (
+	@ r3: contador de )
+	mov r2,#0
+	mov r3,#0
+	checkParenthesis.while:
+		ldrb r1,[r0]
+		add r0,#1
+		cmp r1,#0
+		beq checkParenthesis.end
+		cmp r1,#'('
+		beq addLeftPthsis
+		cmp r1,#')'
+		beq addRightPthsis
+		b checkParenthesis.while
+	addLeftPthsis:
+		add r2,#1
+		b checkParenthesis.while
+	addRightPthsis:
+		add r3,#1
+		b checkParenthesis.while
+	checkParenthesis.end:
+		cmp r3,r2 
+		beq checkedPthsis
+		mov r0,#0					// no estan bien colocados
+		bx lr
+	checkedPthsis:
+		mov r0,#1					// estan bien colocados
+		bx lr
+		
+NOTMinus:
+	ldr r0,=minus
+	ldrb r1,[r0]
+	mvn r2,r1
+	strb r2,[r0]
+	bx lr
