@@ -3,6 +3,7 @@
 	inputMsgLen = .-inputMsg
 	operacion: .space 1025
 	reversePolishNotation: .space 1025
+	new_rpn: .space 1025
 	variables: .space 11
 	enter0ah: .asciz "\n"
 	inputVariable: .asciz " > Ingrese su valor: "
@@ -11,6 +12,13 @@
 	num: .space 11
 	new_operacion: .space 1025
 	result: .space 11
+
+	divErrorMsg: .asciz "Division invalida\n"
+	divErrorLen = .-divErrorMsg
+
+	OverflowErrorMsg: .asciz "Resultado supera a 32 bits\n"
+	OverflowErrorMsgLen = .-OverflowErrorMsg
+
 
 .section .text
 .global _start
@@ -24,7 +32,7 @@ _start:
 	
 @ LLAMAMOS LA FUNCION LEER INPUT
 	ldr r1,=operacion
-	mov r2,#1025									// tiene un limite de 100 caracteres
+	mov r2,#1025									
 	bl readInput
 	
 @ ELIMINAMOS AL ENTER DEL FINAL DEL INPUT
@@ -64,9 +72,6 @@ InfixToRPN:
 	bl isOperator							// es operador?
 	cmp r2,#0
 	beq storeVariable						// no? guarde variable
-	
-
-	
 	
 	@ aqui tenemos que ver el operador actual y de la pila
 	@ r1 contiene el operador actual del input
@@ -125,7 +130,6 @@ compareStack:
 	@ ahora r1 vuelve a tener el operador tope
 	@ y r3 tiene la prioridad tope
 	
-	//add r10,#1
 	b compareStack
 
 pushParenthesis:
@@ -135,7 +139,6 @@ pushParenthesis:
 	
 pushPila2:
 	push {r2}								// metemos solo el operador a la pila
-	//add r10,#1								// aumentamos el indice del 
 	b InfixToRPN							// nos devolvemos al ciclo
 
 pushPila:
@@ -170,6 +173,15 @@ storeVariable:
 	add r10,#1
 	cmp r1,#0x20
 	beq noGuardeEspacio						// pasamos al siguiente caracter del input 
+	push {r0-r12}
+	bl checkVariable
+	cmp r0,#0
+	beq storeVariableList
+	pop {r0-r12}
+	b noGuardeEspacio
+
+storeVariableList:
+	pop {r0-r12}
 	strb r1,[r8,r9]							// guardamos la variable en variables
 	add r9,#1
 	noGuardeEspacio:						// aumentamos el indice de variables
@@ -194,7 +206,11 @@ endRPN:
 	ldr r0,=reversePolishNotation
 	bl cleanDoubleSpace
 	bl cleaningExpression
-	
+
+	ldr r0,=new_rpn
+	ldr r1,=new_operacion
+	bl cpyBuffer
+
 	ldr r4,=variables
 	ldr r3,=char
 
@@ -204,6 +220,7 @@ askInput:
 	beq askInput.end
 	
 	strb r1,[r3]
+	PUSH {R1}
 	ldr r1,=char
 	mov r2,#1
 	bl writeString
@@ -217,31 +234,43 @@ askInput:
 	mov r2,#10
 	swi 0
 	
-	
+	POP {R1}
+	PUSH {R0-R12}
+	bl overwriteVariable
+	ldr r0,=new_operacion
+	bl cleanBuffer
+
+	ldr r0,=new_operacion
+	ldr r1,=new_rpn
+	bl cpyBuffer
+
+	POP {R0-R12}
+
 	add r4,#1
 	b askInput
 askInput.end:
-	ldr r1,=new_operacion
+
+	ldr r1,=new_rpn
 	mov r2,#1025
 	bl writeString
 	bl printEnter
 	
-	ldr r0,=new_operacion
+	ldr r0,=new_rpn
 	push {r0}
 evaluate:
-	pop {r0}				// OBTENER PUNTERO 
-	ldrb r1,[r0]			// OBTENER CARACTER
-	cmp r1,#0				// FIN?
-	beq evaluate.end		// YEAH
+	pop {r0}								// OBTENER PUNTERO 
+	ldrb r1,[r0]							// OBTENER CARACTER
+	cmp r1,#0								// FIN?
+	beq evaluate.end						// YEAH
 	cmp r1,#0x20
 	beq nextChar
-	bl isOperator			// NO, ES OPERADOR?
-	cmp r2,#1				// SI
-	beq evaluar				// EVALUE
-	bl readNum				// ES NUMERO
-	push {r3}				// GUARDE EN STACK EL NUMERO
-	push {r0}				// GUARDE EL PUNTERO
-	b evaluate				// CICLO
+	bl isOperator							// NO, ES OPERADOR?
+	cmp r2,#1								// SI
+	beq evaluar								// EVALUE
+	bl readNum								// ES NUMERO
+	push {r3}								// GUARDE EN STACK EL NUMERO
+	push {r0}								// GUARDE EL PUNTERO
+    b evaluate								// CICLO
 
 nextChar:
 	add r0,#1
@@ -250,7 +279,7 @@ nextChar:
 
 evaluar:
 	add r0,#1
-	mov r12,r0		// guardamos el siguiente puntero
+	mov r12,r0								// guardamos el siguiente puntero
 	cmp r1,#'+'
 	beq suma
 	cmp r1,#'-'
@@ -263,28 +292,39 @@ evaluar:
 	beq exp
 	b evaluate
 suma:
-	pop {r2,r3}		// pop nums
-	add r2,r3		// add
-	push {r2} 		// guarde result 
-	push {r12}		// guarde puntero
-	b evaluate		// ciclo
+	pop {r2,r3}								// pop nums
+	adds r2,r3								// add
+	bcs overflowError
+	push {r2} 								// guarde result 
+	push {r12}								// guarde puntero
+	b evaluate								// ciclo
 
 resta:
 	pop {r2,r3}
+	cmp r2,r3 
+	bgt restaABS
 	SUB r3,r2
+	b restaContinuar
+restaABS:
+	SUB R2,R3
+
+restaContinuar:
 	push {r3}
 	push {r12}
 	b evaluate
 
 multi:
 	pop {r2,r3}
-	mul r3,r2
+	muls r3,r2
+	bmi overflowError
 	push {r3}
 	push {r12}
 	b evaluate
 
 divi:
 	pop {r2,r3}
+	cmp r2,#0
+	beq divError
 	sdiv r3,r2
 	push {r3}
 	push {r12}
@@ -297,12 +337,10 @@ exp:
 	push {r12}
 	b evaluate
 	
-	
-
 evaluate.end:
 	pop {r0}
-	ldr r1,=result			// le damos la direccion del buffer
-	bl int_to_ascii			// llamamos a la funcion
+	ldr r1,=result							// le damos la direccion del buffer
+	bl int_to_ascii							// llamamos a la funcion
 	
 	ldr r1,=result
 	mov r2,#11
@@ -314,7 +352,100 @@ _exit:
 	mov r0,#0
 	swi 0
 
-@ ======== FUNCTIONS =========
+divError:
+	ldr r1,=divErrorMsg
+	ldr r2,=divErrorLen
+	bl writeString
+	b _exit
+
+overflowError:
+	ldr r1,=OverflowErrorMsg
+	ldr r2,=OverflowErrorMsgLen
+	bl writeString
+	b _exit
+
+@ ======== FUNCTIONS ==============================================================
+
+cpyBuffer:
+	@ funcion para copiar un buffer
+	@ r0: buffer a guardar
+	@ r1: buffer a copiar
+	cpyBuffer.while:
+		ldrb r2,[r1]
+		cmp r2,#0								// fin de buffer a copiar
+		beq cpyBuffer.end
+		strb r2,[r0]
+		add r0,#1
+		add r1,#1
+		b cpyBuffer.while
+	cpyBuffer.end:
+		bx lr
+
+cleanBuffer:
+	@ funcion para limpiar un buffer
+	@ r0: recibe el buffer
+	cleanBuffer.while:
+		ldrb r1,[r0]
+		cmp r1,#0
+		beq cleanBuffer.end
+		mov r2,#0
+		strb r2,[r0]
+		add r0,#1
+		b cleanBuffer.while
+	cleanBuffer.end:
+		bx lr
+
+
+overwriteVariable:
+	@ r0: expression pointer
+	@ r1: variable 
+	@ r2: number pointer
+	@ r3: new_rpn 
+	ldr r2,=num
+	ldr r0,=new_operacion
+	ldr r3,=new_rpn
+	overwriteVariable.while:
+	ldrb r4,[r0]				// expression character
+	cmp r4,#0					// end?
+	beq overwriteVariable.end	
+	add r0,#1
+	cmp r4,r1					// is the same as variable?
+	beq overwrite				// yes? overwrite 
+
+	strb r4,[r3]
+	add r3,#1
+	b overwriteVariable.while
+	
+	overwrite:
+		ldrb r5,[r2]
+		cmp r5,#10
+		beq overwriteVariable.while
+		strb r5,[r3]
+		add r3,#1
+		add r2,#1
+		b overwrite
+	overwriteVariable.end:
+		bx lr
+	
+
+checkVariable:
+	@ funcion para revisar si una variable se encuentra ya en la lista
+	ldr r2,=variables
+	checkVariable.while:
+	ldrb r3,[r2]
+	cmp r3,#0
+	beq notInList
+	cmp r1,r2
+	beq inList
+	add r2,#1
+	b checkVariable.while
+	inList:
+		mov r0,#1
+		bx lr
+	notInList:
+		mov r0,#0
+		bx lr
+
 readNum:
 	//ldr r0,=numInput
 	mov r2,#10
@@ -509,7 +640,7 @@ int_to_ascii:
     ADD R4, R1, #11      @ 
     MOV R1, R4
 
-loop:
+	int_to_ascii.loop:
     MOV R4, #0           @ 
     UDIV R4, R0, R3      @ 
     MLS R5, R4, R3, R0   @ r5 = r0 - (r4*10), es decir r0%10
@@ -517,7 +648,7 @@ loop:
     STRB R5, [R1, #-1]!  @ 
     MOV R0, R4           @ 
     CMP R0, #0           @ 
-    BNE loop             @ 
+    BNE int_to_ascii.loop             @ 
 
     @ 
     MOV R0, R2           @ 
@@ -528,21 +659,22 @@ loop:
 
 
 reverse:
+	@ Funcion para reverse un string
     PUSH {R4, R5, LR}    @ 
     SUB R1, R1, #1       @ 
-rev_loop:
-    CMP R0, R1           @ 
-    BHS rev_done         @ 
-    LDRB R4, [R0]        @ 
-    LDRB R5, [R1]        @ 
-    STRB R5, [R0]        @ 
-    STRB R4, [R1]        @ 
-    ADD R0, R0, #1       @ 
-    SUB R1, R1, #1       @ 
-    B rev_loop           @
-rev_done:
-    POP {R4, R5, LR}     @ 
-    BX LR                @ 
+	rev_loop:
+		CMP R0, R1           @ 
+		BHS rev_done         @ 
+		LDRB R4, [R0]        @ 
+		LDRB R5, [R1]        @ 
+		STRB R5, [R0]        @ 
+		STRB R4, [R1]        @ 
+		ADD R0, R0, #1       @ 
+		SUB R1, R1, #1       @ 
+		B rev_loop           @
+	rev_done:
+		POP {R4, R5, LR}     @ 
+		BX LR                @ 
 
 pow:
 	@ funcion de exponente
