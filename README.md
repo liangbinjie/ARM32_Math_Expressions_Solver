@@ -1,6 +1,8 @@
 # ARM32 Assembly to Solve Math Expressions
 
-This project involves developing a program to solve mathematical expressions using ARM assembly language on a Raspberry Pi. The objective is to leverage the low-level programming capabilities of ARM assembly to create an efficient and compact solution for evaluating mathematical expressions.
+This project involves developing a program to solve mathematical expressions using ARM assembly language on a `Raspberry Pi`. The objective is to leverage the low-level programming capabilities of `ARM assembly` to create an efficient and compact solution for evaluating mathematical expressions. 
+
+For solving the arithmetic math expressions given by the user we will need to convert our expressions into a `reverse Polish Notation` expression [1], by doing so, using the `stack`, we can calculate the result.
 
 ## Hardware and Software Requirements
 
@@ -47,7 +49,7 @@ When you read an operator (like +, -, *, /):
 - Compare it with the operator on the top of the stack.
 - If the stack is empty or has a left parenthesis ( on top, PUSH the current operator onto the stack.
 - If the operator is greater in precedence than top of stack, push.
-- If the operator is equal o less in precedence than top of stack, POP top operator from stack, put it on output string, PUSH current operator to stack until the next top precedence is lower than the actuak operador.
+- If the operator is equal o less in precedence than top of stack, POP top operator from stack, put it on output string, PUSH current operator to stack until the next top precedence is lower than the actual operador.
 
 ### Left Parenthesis (:
 
@@ -88,7 +90,7 @@ First we push the numbers
 |    12    |
 |    3     |
 
-We now encounter a multiplication operator `*`, so, we pop the last two numbers out of the stack, and we multiply them, which we give us `36`, with the result 36, we push it into the stack. Then we push the other two numbers. (3, 4)
+We now encounter a multiplication operator `*`, so, we pop the last two numbers out of the stack, and we multiply them, which will give us `36`, with the result 36, we push it into the stack. Then we push the other two numbers. (3, 4)
 
 |   STACK  |
 |----------|
@@ -105,3 +107,68 @@ After pushing 3 and 4, we encounter `-` sign, we need to substract, giving us th
 
 The next character in the expression is `+` operator, we need to pop the two numbers left in the stack and make an addition. This will give the final result of `37`.
 
+![image](https://github.com/liangbinjie/ARM32_Math_Expressions_Solver/assets/67171031/dc248259-6963-4bc8-9de9-e618db0b1fb8)
+
+---
+
+## Flow Diagram
+```mermaid
+flowchart TD
+%% Nodes
+    Start(Start)
+    GetInput{Input Infix Expression}
+    ConvertRPN[Convert Infix -> Reverse Polish Notation]
+    DelDoubleSpaces[Delete Double Spaces]
+    GetVariables{Get variables values}
+    OverwriteVariable[Overwrite variable value in rpn expression]
+    Evaluate[Evaluate expression]
+
+%% Edge connections between nodes
+    Start --> GetInput
+    GetInput -- Bad Expression --> End
+    GetInput -- Correct Expression --> DelDoubleSpaces
+    DelDoubleSpaces --> ConvertRPN
+    ConvertRPN --> GetVariables
+    GetVariables -- cantVar > 10 --> End
+    GetVariables -- var != int --> GetVariables
+    GetVariables -- cantVar <= 10 --> OverwriteVariable
+    OverwriteVariable --> Evaluate
+    Evaluate -- Overflow --> End
+    Evaluate -- Division entre 0 --> End
+
+    Evaluate --> PrintResult --> End
+```
+
+The program starts, the first thing it does is to ask the user to input the math expression.
+
+After getting the input, we delete the enter at the end, and we check:
+  - Is the input empty? If so, end program.
+  - Are the parenthesis written correctly? if not, end program.
+  - Is the expression written correctly? if not, end program. (MISSING)
+
+Passing all checks, its time to convert infix expression into reverse Polish Notation
+
+For doing such task, it is recommended to read the previous section for a better understanding on how the convertion works.
+
+After converting into reverse polish notation, the next thing to do is ask for the values of each variable.
+
+For every value we input, we need to check if it is a correct value. If the value is correct, the next step is to overwrite the polish notation, where we encounter the variable we are working on, we change the variable for the value. During this phase, we check if the quantity of variables we have in the list is less or equal to 10, if greater, end the program with an error message.
+
+Subsequent to changing the variables, we can finally evaluate the expression, as said before, it is recommended to read the previous section to get a better understanding how evaluation works. If the evaluation produces an overflow or we divide with 0, it will throw an error message.
+
+
+
+
+
+# References:
+[1] Wikipedia contributors, “Reverse Polish notation,” Wikipedia, Apr. 27, 2024. https://en.wikipedia.org/wiki/Reverse_Polish_notation
+
+[2] Erb Computer Science, “Reverse polish notation using stacks,” YouTube. Jun. 19, 2019. [Online]. Available: https://www.youtube.com/watch?v=QxHRM0EQHiQ
+
+[3] Back To Back SWE, “Reverse polish notation: types of mathematical notations & using a stack to solve RPN expressions,” YouTube. Feb. 25, 2019. [Online]. Available: https://www.youtube.com/watch?v=qN8LPIcY6K4
+
+[4] Raspberry Pi, "Raspberry Pi". https://www.raspberrypi.com/
+
+[5] Arm.syscall.sh. (n.d.). arm.syscall.sh. https://arm.syscall.sh/
+
+[6] Mermaid Chart - Create complex, visual diagrams with text. A smarter way of creating diagrams. (n.d.-b). https://www.mermaidchart.com/
