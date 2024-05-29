@@ -178,7 +178,7 @@ storeVariable:
 	cmp r0,#0
 	beq storeVariableList
 	pop {r0-r12}
-	b noGuardeEspacio
+	b InfixToRPN
 
 storeVariableList:
 	pop {r0-r12}
@@ -401,10 +401,10 @@ overwriteVariable:
 	@ r1: variable 
 	@ r2: number pointer
 	@ r3: new_rpn 
-	ldr r2,=num
 	ldr r0,=new_operacion
 	ldr r3,=new_rpn
 	overwriteVariable.while:
+	ldr r2,=num
 	ldrb r4,[r0]				// expression character
 	cmp r4,#0					// end?
 	beq overwriteVariable.end	
@@ -435,7 +435,7 @@ checkVariable:
 	ldrb r3,[r2]
 	cmp r3,#0
 	beq notInList
-	cmp r1,r2
+	cmp r1,r3
 	beq inList
 	add r2,#1
 	b checkVariable.while
