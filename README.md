@@ -157,7 +157,20 @@ For every value we input, we need to check if it is a correct value. If the valu
 Subsequent to changing the variables, we can finally evaluate the expression, as said before, it is recommended to read the previous section to get a better understanding how evaluation works. If the evaluation produces an overflow or we divide with 0, it will throw an error message.
 
 
+# Block Diagrams
 
+In this section, we will cover some of the most important blocks in this program.
+
+### Infix To RPN Block Diagram
+![InfxToRPN_BlockDiagram](https://github.com/liangbinjie/ARM32_Math_Expressions_Solver/assets/67171031/19b99a13-983e-46a6-bb55-2f5ffc635a62)
+
+In this block, we receive the infix expression we entered as input. For every character it has, we first compare if the character is equal to `0`, if so, pop all the remaining operators out of the stack and store them in the output, giving us the reverse polish notation.
+
+- If the character is `)`, push it directly to the stack.
+- If the character is `(`, pop until finding the closing parenthesis.
+- If it is a `number`, store it in the output.
+- If it is a `variable`, store it in the output
+- If it is an operator, compare top of the stack, if top <= actual, pop top, store top in output. If the next top < actual, pop top, store in output and lastly push actual operator.
 
 
 # References:
@@ -172,3 +185,5 @@ Subsequent to changing the variables, we can finally evaluate the expression, as
 [5] Arm.syscall.sh. (n.d.). arm.syscall.sh. https://arm.syscall.sh/
 
 [6] Mermaid Chart - Create complex, visual diagrams with text. A smarter way of creating diagrams. (n.d.-b). https://www.mermaidchart.com/
+
+[7] MIRO | The Visual Workspace for Innovation. (n.d.). https://miro.com/
