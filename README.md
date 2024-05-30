@@ -172,7 +172,7 @@ In this block, we receive the infix expression we entered as input. For every ch
 - If it is a `variable`, store it in the output
 - If it is an operator, compare top of the stack, if top <= actual, pop top, store top in output. If the next top < actual, pop top, store in output and lastly push actual operator.
 
-### Get Variables values
+### Get Variables values Block Diagram
 ![GetVar_BlockDiagram](https://github.com/liangbinjie/ARM32_Math_Expressions_Solver/assets/67171031/563333ee-6efd-431d-9b99-27ebf56ef526)
 
 
@@ -192,8 +192,18 @@ The next step is to overwrite, whenever we encounter the variable we are working
 
 Clean RPN, and copy NEW_RPN to RPN, repeat the process.
   
+### Evaluate Block Diagram
+![Evaluate_BlockDiagram](https://github.com/liangbinjie/ARM32_Math_Expressions_Solver/assets/67171031/7ed40e42-ad73-4b7b-9a8e-2d5c5e33abc7)
 
+In this block section, we evaluate the expression from new_rpn. We get the character from new_rpn, if character is equal to 0, we already finish evaluating.
 
+If the character is equal to 20h, which is a `space`, we ignore it, and we get to the next character.
+
+If the character is an operator, we pop two times the stack to get the last two numbers we stored in the stack and we evaluate with the current operator.
+
+If the character is a number, we read the number from ASCII to INT, then push it into the stack.
+
+---
 
 # References:
 [1] Wikipedia contributors, “Reverse Polish notation,” Wikipedia, Apr. 27, 2024. https://en.wikipedia.org/wiki/Reverse_Polish_notation
