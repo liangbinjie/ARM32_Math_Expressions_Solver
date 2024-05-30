@@ -56,6 +56,13 @@ _start:
 	cmp r1,#0x20							// error si ingresa un espacio al inicio
 	beq badExpression
 
+@ VERIFICAR QUE EL PRIMER CARACTER NO SEA UN OPERADOR
+	ldr r0,=operacion
+	ldrb r1,[r0]
+	bl isOperator
+	cmp r2,#1
+	beq badExpression	
+
 @ VERIFICAR QUE EL ULTIMO CARACTER NO SEA UN OPERADOR
 	bl checkLastOperator
 	bl isOperator
