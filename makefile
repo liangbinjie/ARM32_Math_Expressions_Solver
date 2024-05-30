@@ -1,14 +1,14 @@
 AS = as
 LD = ld
 
-TARGET = TareaP2
+TARGET = main
 
-OBJ = TareaP2.o
+OBJ = main.o
 
 all:$(TARGET)
 
-$(OBJ): TareaP2.s
-	$(AS) TareaP2.s -o $(OBJ)
+$(OBJ): main.s
+	$(AS) main.s -o $(OBJ)
 
 $(TARGET): $(OBJ)
 	$(LD) $(OBJ) -o $(TARGET)
