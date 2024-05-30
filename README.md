@@ -111,7 +111,7 @@ The next character in the expression is `+` operator, we need to pop the two num
 
 ---
 
-## Flow Diagram
+# Flow Diagram
 ```mermaid
 flowchart TD
 %% Nodes
@@ -171,6 +171,27 @@ In this block, we receive the infix expression we entered as input. For every ch
 - If it is a `number`, store it in the output.
 - If it is a `variable`, store it in the output
 - If it is an operator, compare top of the stack, if top <= actual, pop top, store top in output. If the next top < actual, pop top, store in output and lastly push actual operator.
+
+### Get Variables values
+![GetVar_BlockDiagram](https://github.com/liangbinjie/ARM32_Math_Expressions_Solver/assets/67171031/ef7ce7df-bb60-4245-97c5-617a2b61611d)
+
+In this block, we get the values of each variable, the logic for this code is the following
+
+Lets suppose you have `a 2 + b -` as the RPN expression, so you need to change `a` & `b` variable for a number. So the first thing we need to do is get the value of `a`, lets say we give him a 50,
+
+the next step is to change whenever we encounter the letter a in the RPN expression change it for 50, so in this case the result will be `new_rpn = 50 2 + b -`. Now we need to get the value for `b`,
+
+Lets give `b` the value of 2, now `rpn = 50 2 + 5 -`. For each iteration we need to clean `rpn` first and copy `rpn` the new value of `new_rpn`, by doing so, we prevent the mix of values in the RPN
+
+About the diagram, as said previously, we receive a variable from the list of variables, we compare if we have reached to the end the variables, if so, we have finished the overwriting.
+
+If we haven't reached to the end, then we ask for the value, if the value we get is not a number, ask again.
+
+The next step is to overwrite, whenever we encounter the variable we are working on in the RPN expression, overwrite it with the value we have entered.
+
+Clean RPN, and copy NEW_RPN to RPN, repeat the process.
+  
+
 
 
 # References:
