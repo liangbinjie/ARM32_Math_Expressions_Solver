@@ -56,6 +56,12 @@ _start:
 	cmp r1,#0x20							// error si ingresa un espacio al inicio
 	beq badExpression
 
+@ VERIFICAR QUE EL ULTIMO CARACTER NO SEA UN OPERADOR
+	bl checkLastOperator
+	bl isOperator
+	cmp r2,#1
+	beq badExpression						// si lo es, fin
+
 @ ELIMINAMOS AL ENTER DEL FINAL DEL INPUT
 	ldr r0,=operacion
 	bl delReturn
@@ -908,3 +914,20 @@ NOTMinus:
 	mvn r2,r1						// not r1, store in r2
 	strb r2,[r0]					// guarda el valor en minus
 	bx lr							// return
+
+checkLastOperator:
+	@ funcion para verificar que el ultimo caracter no sea un operador
+	ldr r0,=operacion
+	checkLastOperator.while:
+		ldrb r1,[r0]
+		cmp r1,#0
+		beq checkLastOperator.end
+		cmp r1,#10
+		beq checkLastOperator.end
+		ldrb r2,[r0]
+		add r0,#1
+		b checkLastOperator.while
+	checkLastOperator.end:
+		mov r1,r2
+		bx lr
+
