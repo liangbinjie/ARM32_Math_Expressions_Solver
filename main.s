@@ -59,9 +59,13 @@ _start:
 @ VERIFICAR QUE EL PRIMER CARACTER NO SEA UN OPERADOR
 	ldr r0,=operacion
 	ldrb r1,[r0]
+	cmp r1,#'('
+	beq siga
 	bl isOperator
 	cmp r2,#1
-	beq badExpression	
+	beq badExpression
+
+siga:	
 
 @ VERIFICAR QUE EL ULTIMO CARACTER NO SEA UN OPERADOR
 	bl checkLastOperator
@@ -384,6 +388,15 @@ resta:
 	@ ES UNA OPERACION DE RESTA
 	@ R3: PRIMER OPERANDO
 	@ R2: SEGUNDO OPERANDO
+	mov r10,r0			
+	add r10,#1								// si el siguiente caracter de RPN
+	ldrb r11,[r10]							// es un signo de resta
+	cmp r1,r11								// es decir comparamos "-" y "-"
+	bne noCambios							// si el siguiente no es un signo de resta, siga sin cambios
+	push {r0-r12}							// pero si ese no es el caso, osea si es un signo de resta
+	bl NOTMinus								// cambiamos la señal del signo negativo
+	pop {r0-r12}							// para que se considere como una "suma", -- = +
+noCambios:
 	pop {r2,r3}
 	cmp r2,r3 
 	bgt restaABS							// el segundo operando es mas grande
@@ -927,6 +940,8 @@ checkLastOperator:
 	ldr r0,=operacion
 	checkLastOperator.while:
 		ldrb r1,[r0]
+		cmp r1,#')'
+		beq checkLastOperator.end
 		cmp r1,#0
 		beq checkLastOperator.end
 		cmp r1,#10
